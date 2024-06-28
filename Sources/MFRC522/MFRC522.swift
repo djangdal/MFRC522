@@ -2,7 +2,7 @@ import Foundation
 import Glibc
 import SwiftyGPIO
 
-typealias Byte = UInt8
+public typealias Byte = UInt8
 
 public class MFRC522 {
     let NRSTPD: GPIOName            = .P22
@@ -193,7 +193,7 @@ public class MFRC522 {
         let pOut = calulateCRC(pIndata: recvData)
         recvData.append(pOut[0])
         recvData.append(pOut[1])
-        let (status, backData, backLen) = toCard(command: PCD_TRANSCEIVE, sendData: recvData)
+        let (status, backData, _) = toCard(command: PCD_TRANSCEIVE, sendData: recvData)
         if status != MI_OK {
             print("Error while reading!")
         }
@@ -313,7 +313,7 @@ public class MFRC522 {
         write(addr: BitFramingReg, val: 0x00)
 
         let serNum = [PICC_ANTICOLL, 0x20]
-        var (status, backData, backBits) = toCard(command: PCD_TRANSCEIVE, sendData: serNum)
+        var (status, backData, _) = toCard(command: PCD_TRANSCEIVE, sendData: serNum)
 
         if status == MI_OK {
             if backData.count == 5 {
@@ -385,7 +385,7 @@ public class MFRC522 {
         }
 
         // Now we start the authentication itself
-        let (status, backData, backLen) = toCard(command: PCD_AUTHENT, sendData: buff)
+        let (status, _, _) = toCard(command: PCD_AUTHENT, sendData: buff)
 
         // Check if an error occurred
         if status != MI_OK {
