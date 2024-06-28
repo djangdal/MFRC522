@@ -4,7 +4,7 @@ import SwiftyGPIO
 
 typealias Byte = UInt8
 
-class MFRC522 {
+public class MFRC522 {
     let NRSTPD: GPIOName            = .P22
 
     let MAX_LEN: Int                = 16
@@ -109,7 +109,7 @@ class MFRC522 {
     let spi: SysFSSPI
     let gpios: [GPIOName: GPIO]
 
-    init() {
+    public init() {
         spi = (SwiftyGPIO.hardwareSPIs(for: board)?.first as? SysFSSPI)!
         gpios = SwiftyGPIO.GPIOs(for: board)
         spi.setMaxSpeedHz(speed)
@@ -121,7 +121,7 @@ class MFRC522 {
         start()
     }
 
-    func start() {
+    public func start() {
         reset()
 
         write(addr: TModeReg, val: 0x8D)
@@ -133,18 +133,18 @@ class MFRC522 {
         antennaOn()
     }
 
-    func reset() {
+    public func reset() {
         write(addr: CommandReg, val: PCD_RESETPHASE)
     }
 
-    func write(addr: Byte, val: Byte) {
+    public func write(addr: Byte, val: Byte) {
         spi.sendData([
             (addr << 1) & 0x7E,
             val
         ])
     }
 
-    func write(blockAddr: Byte, writeData: [Byte]) {
+    public func write(blockAddr: Byte, writeData: [Byte]) {
         var buff: [Byte] = [
             PICC_WRITE,
             blockAddr
@@ -177,7 +177,7 @@ class MFRC522 {
         }
     }
 
-    func read(addr: Byte) -> Byte {
+    public func read(addr: Byte) -> Byte {
         let val = spi.sendDataAndRead([
             ((addr << 1) & 0x7E) | 0x80,
             0
@@ -185,7 +185,7 @@ class MFRC522 {
         return val[1]
     }
 
-    func read(blockAddr: Byte) {
+    public func read(blockAddr: Byte) {
         var recvData: [Byte] = [
             PICC_READ,
             blockAddr
@@ -202,28 +202,28 @@ class MFRC522 {
         }
     }
 
-    func setBitMask(reg: Byte, mask: Byte) {
+    public func setBitMask(reg: Byte, mask: Byte) {
         let tmp = read(addr: reg)
         write(addr: reg, val: tmp | mask)
     }
 
-    func clearBitMask(reg: Byte, mask: Byte) {
+    public func clearBitMask(reg: Byte, mask: Byte) {
         let tmp = read(addr: reg)
         write(addr: reg, val: tmp & (~mask))
     }
 
-    func antennaOn() {
+    public func antennaOn() {
         let temp = read(addr: TxControlReg)
         if ~(temp & 0x03) != 0 {
             setBitMask(reg: TxControlReg, mask: 0x03)
         }
     }
 
-    func antennaOff() {
+    public func antennaOff() {
         clearBitMask(reg: TxControlReg, mask: 0x03)
     }
 
-    func toCard(command: Byte, sendData: [Byte]) -> (status: Byte, backData: [Byte], backLen: Int) {
+    public func toCard(command: Byte, sendData: [Byte]) -> (status: Byte, backData: [Byte], backLen: Int) {
         var backData: [Byte] = []
         var backLen = 0
         var status = MI_ERR
@@ -297,7 +297,7 @@ class MFRC522 {
         return (status: status, backData: backData, backLen: backLen)
     }
 
-    func request(reqMode: Byte) -> (status: Byte, backBits: Int) {
+    public func request(reqMode: Byte) -> (status: Byte, backBits: Int) {
         write(addr: BitFramingReg, val: 0x07)
 
         let (status, _, backBits) = toCard(command: PCD_TRANSCEIVE, sendData: [reqMode])
@@ -309,7 +309,7 @@ class MFRC522 {
         return (status, backBits)
     }
 
-    func anticoll() -> (status: Byte, backData: [Byte]) {
+    public func anticoll() -> (status: Byte, backData: [Byte]) {
         write(addr: BitFramingReg, val: 0x00)
 
         let serNum = [PICC_ANTICOLL, 0x20]
@@ -328,7 +328,7 @@ class MFRC522 {
         return (status: status, backData: backData)
     }
 
-    func calulateCRC(pIndata: [Byte]) -> [Byte] {
+    public func calulateCRC(pIndata: [Byte]) -> [Byte] {
         clearBitMask(reg: DivIrqReg, mask: 0x04)
         setBitMask(reg: FIFOLevelReg, mask: 0x80)
         pIndata.forEach {
@@ -348,7 +348,7 @@ class MFRC522 {
         ]
     }
 
-    func selectTag(serNum: [Byte]) -> Byte {
+    public func selectTag(serNum: [Byte]) -> Byte {
         var buf: [Byte] = [PICC_SElECTTAG, 0x70]
         for i in 0 ..< 5 {
             buf.append(serNum[i])
@@ -367,7 +367,7 @@ class MFRC522 {
         }
     }
 
-    func auth(authMode: Byte, blockAddr: Byte, sectorkey: [Byte], serNum: [Byte]) -> Byte {
+    public func auth(authMode: Byte, blockAddr: Byte, sectorkey: [Byte], serNum: [Byte]) -> Byte {
         var buff: [Byte] = []
 
         // First byte should be the authMode (A or B)
@@ -399,11 +399,11 @@ class MFRC522 {
         return status
     }
 
-    func stopCrypto() {
+    public func stopCrypto() {
         clearBitMask(reg: Status2Reg, mask: 0x08)
     }
 
-    func dumpClassic1K(key: [Byte], uid: [Byte]) {
+    public func dumpClassic1K(key: [Byte], uid: [Byte]) {
         for i: Byte in 0 ..< 64 {
             let status = auth(authMode: PICC_AUTHENT1A, blockAddr: i, sectorkey: key, serNum: uid)
             // Check if authenticated
