@@ -1,3 +1,4 @@
+#if os(Linux)
 import Foundation
 import Glibc
 import SwiftyGPIO
@@ -430,40 +431,5 @@ public class MFRC522 {
             }
         }
     }
-
-    public func readFirstBlockAsInt(authMode: Byte, key: [Byte]) -> UInt32? {
-        // Authenticate for block 0
-        let (status, uidBytes) = anticoll()
-        guard status == MI_OK else {
-            print("Failed to get UID")
-            return nil
-        }
-
-        // Authenticate using the provided key and UID
-        let authStatus = auth(authMode: authMode, blockAddr: 0, sectorkey: key, serNum: uidBytes)
-        guard authStatus == MI_OK else {
-            print("Authentication failed with status: \(authStatus)")
-            return nil
-        }
-
-        // Read block 0
-        var recvData: [Byte] = [PICC_READ, 0x00]
-        let crc = calulateCRC(pIndata: recvData)
-        recvData.append(crc[0])
-        recvData.append(crc[1])
-
-        let (readStatus, backData, _) = toCard(command: PCD_TRANSCEIVE, sendData: recvData)
-        guard readStatus == MI_OK, backData.count == 16 else {
-            print("Failed to read block 0 with status: \(readStatus) and backData count: \(backData.count)")
-            return nil
-        }
-
-        // Convert first 4 bytes of block 0 to integer (little-endian)
-        let blockValue = UInt32(backData[0]) |
-                         (UInt32(backData[1]) << 8) |
-                         (UInt32(backData[2]) << 16) |
-                         (UInt32(backData[3]) << 24)
-        
-        return blockValue
-    }
 }
+#endif
